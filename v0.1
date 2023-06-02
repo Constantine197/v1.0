@@ -1,0 +1,170 @@
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <fstream>
+#include <random>
+#include <chrono>
+
+using std::cout;
+using std::endl;
+using std::setw;
+using std::string;
+using std::left;
+using std::right;
+using std::setprecision;
+using std::fixed;
+
+float calculateAverage(const std::vector<float>& grades) {
+    float total = 0;
+    for (float grade : grades) {
+        total += grade;
+    }
+    return grades.empty() ? 0 : total / grades.size();
+}
+
+float calculateMedian(const std::vector<float>& grades) {
+    std::vector<float> sortedGrades = grades;
+    std::sort(sortedGrades.begin(), sortedGrades.end());
+    size_t size = sortedGrades.size();
+    if (size % 2 == 0) {
+        return (sortedGrades[size / 2 - 1] + sortedGrades[size / 2]) / 2;
+    }
+    else {
+        return sortedGrades[size / 2];
+    }
+}
+
+std::string generateRandomName(int index) {
+    return "vardas" + std::to_string(index);
+}
+
+std::string generateRandomLastName(int index) {
+    return "pavarde" + std::to_string(index);
+}
+
+float generateRandomGrade() {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(0.0f, 10.0f);
+
+    float grade = dist(gen);
+    grade = std::round(grade * 100) / 100; // Round to two decimal places
+
+    return grade;
+}
+
+void saveToFile(const std::vector<std::string>& students, const std::string& filename) {
+    std::ofstream outputFile(filename);
+    if (!outputFile) {
+        cout << "Failed to open the file: " << filename << endl;
+        return;
+    }
+
+    for (const std::string& student : students) {
+        outputFile << student << endl;
+    }
+
+    outputFile.close();
+}
+
+void saveGradesToFile(const std::vector<std::vector<float>>& grades, const std::string& filename) {
+    std::ofstream outputFile(filename);
+    if (!outputFile) {
+        cout << "Failed to open the file: " << filename << endl;
+        return;
+    }
+
+    for (const std::vector<float>& studentGrades : grades) {
+        for (float grade : studentGrades) {
+            outputFile << std::fixed << std::setprecision(2) << grade << " ";
+        }
+        outputFile << endl;
+    }
+
+    outputFile.close();
+}
+
+void saveAverageGradesToFile(const std::vector<float>& averageGrades, const std::string& filename) {
+    std::ofstream outputFile(filename);
+    if (!outputFile) {
+        cout << "Failed to open the file: " << filename << endl;
+        return;
+    }
+
+    for (float grade : averageGrades) {
+        outputFile << std::fixed << std::setprecision(2) << grade << endl;
+    }
+
+    outputFile.close();
+}
+
+double calculateSortingSpeed(const std::vector<std::vector<float>>& data) {
+    auto startTime = std::chrono::steady_clock::now();
+    for (const std::vector<float>& grades : data) {
+        std::vector<float> sortedGrades = grades;
+        std::sort(sortedGrades.begin(), sortedGrades.end());
+    }
+    auto endTime = std::chrono::steady_clock::now();
+    std::chrono::duration<double> sortingTime = endTime - startTime;
+    return sortingTime.count();
+}
+
+int main() {
+    const int numStudents = 10000000;
+    const int numGrades = 12;
+
+    std::vector<std::string> galvociai; // Top students
+    std::vector<std::string> vargsiukai; // Struggling students
+    std::vector<std::vector<float>> galvociaiGrades; // Grades of top students
+    std::vector<std::vector<float>> vargsiukaiGrades; // Grades of struggling students
+    std::vector<float> galvociaiAverageGrades; // Average grades of top students
+    std::vector<float> vargsiukaiAverageGrades; // Average grades of struggling students
+
+    auto startTime = std::chrono::steady_clock::now(); // Start the timer
+
+    for (int i = 1; i <= numStudents; ++i) {
+        std::string firstName = generateRandomName(i);
+        std::string lastName = generateRandomLastName(i);
+
+        std::vector<float> grades;
+        for (int j = 0; j < numGrades; ++j) {
+            float grade = generateRandomGrade();
+            grades.push_back(grade);
+        }
+
+        float averageGrade = calculateAverage(grades);
+        if (averageGrade >= 5.0) {
+            galvociai.push_back(firstName + " " + lastName);
+            galvociaiGrades.push_back(grades);
+            galvociaiAverageGrades.push_back(averageGrade);
+        }
+        else {
+            vargsiukai.push_back(firstName + " " + lastName);
+            vargsiukaiGrades.push_back(grades);
+            vargsiukaiAverageGrades.push_back(averageGrade);
+        }
+    }
+
+    auto endTime = std::chrono::steady_clock::now(); // Stop the timer
+
+    std::chrono::duration<double> executionTime = endTime - startTime;
+
+    double vargsiukaiSortingTime = calculateSortingSpeed(vargsiukaiGrades);
+    double galvociaiSortingTime = calculateSortingSpeed(galvociaiGrades);
+
+    saveToFile(galvociai, "galvociai.txt");
+    saveToFile(vargsiukai, "vargsiukai.txt");
+    saveGradesToFile(galvociaiGrades, "galvociai_grades.txt");
+    saveGradesToFile(vargsiukaiGrades, "vargsiukai_grades.txt");
+    saveAverageGradesToFile(galvociaiAverageGrades, "galvociai_average_grades.txt");
+    saveAverageGradesToFile(vargsiukaiAverageGrades, "vargsiukai_average_grades.txt");
+
+    cout << "Results saved to 'galvociai.txt', 'vargsiukai.txt', 'galvociai_grades.txt', 'vargsiukai_grades.txt', 'galvociai_average_grades.txt', and 'vargsiukai_average_grades.txt'." << endl;
+    cout << "Execution time: " << executionTime.count() << " seconds." << endl;
+    cout << "Vargsiukai sorting time: " << vargsiukaiSortingTime << " seconds." << endl;
+    cout << "Galvociai sorting time: " << galvociaiSortingTime << " seconds." << endl;
+
+    return 0;
+}
